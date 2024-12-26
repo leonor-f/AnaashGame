@@ -1,5 +1,3 @@
-% filepath: /C:/Users/leono/NONÔ/FEUP/3º ANO/1º semestre/PFL/trabalho/TP2/src/game2.pl
-
 :- use_module(library(lists)). % Ensure the lists library is imported for maplist/2
 
 % Main predicate to start the game
