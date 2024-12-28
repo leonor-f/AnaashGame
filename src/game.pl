@@ -1,4 +1,7 @@
-:- use_module(library(lists)). % Ensure the lists library is imported for maplist/2
+:- use_module(library(lists)).
+:- use_module(library(between)).
+:- use_module(library(format)).
+:- use_module(library(random)).
 
 % Main predicate to start the game
 play :-
@@ -51,7 +54,7 @@ start_game(Player1, Player2) :-
 initial_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
     board(6, Board). % Default board size is 6x6
 
-% Display the current, game state
+% Display the current game state (player and board)
 display_game(game(Board, CurrentPlayer, _)) :-
     display_board(Board),
     format('Current player: ~w~n', [CurrentPlayer]).
@@ -62,11 +65,7 @@ move(game(Board, CurrentPlayer, Players), Move, game(NewBoard, NextPlayer, Playe
     apply_move(Board, CurrentPlayer, Move, NewBoard),
     next_player(Players, CurrentPlayer, NextPlayer).
 
-% Determine the color of a piece
-piece_color(Piece, Color) :-
-    Piece =.. [Color, _].
-
-% Generate2 a list of all valid moves
+% Generate a list of all valid moves
 valid_moves(game(Board, player(Color, _), _), Moves) :-
     findall((X1, Y1, X2, Y2), 
         (between(1, 6, X1), between(1, 6, Y1), 
@@ -112,11 +111,9 @@ choose_greedy_move(GameState, Move) :-
 % Prompt the user to input a move
 prompt_move(GameState, Move) :-
     valid_moves(GameState, Moves),
-    write('Enter your move format: move_type (X1,Y1,X2,Y2): '), nl, write('|: '),
+    write('Enter your move in the format (X1, Y1, X2, Y2): '), nl,
     catch(read(UserInput), _, (write('Syntax error. Try again.'), nl, prompt_move(GameState, Move))),
-    ( member(UserInput, Moves) -> Move = UserInput
-    ; write('Invalid move. Try again.'), nl, prompt_move(GameState, Move)
-    ).
+    (member(UserInput, Moves) -> Move = UserInput; write('Invalid move. Try again.'), nl, prompt_move(GameState, Move)).
 
 % Evaluate a move for AI decision-making
 evaluate_move(GameState, Move, Value) :-
@@ -156,8 +153,6 @@ board(Size, Board) :-
     maplist(length_(Size), Board),
     fill_board(Board).
 
-length_(Length, List) :- length(List, Length).
-
 % Fill the board with the initial checkered pattern
 fill_board(Board) :-
     maplist(fill_row, Board, [1,2,3,4,5,6]).
@@ -179,7 +174,7 @@ display_row(Row) :-
 display_cell(Cell) :-
     ( Cell = red(H) -> format(' r~d ', [H])
     ; Cell = blue(H) -> format(' b~d ', [H])
-    ; format(' . ')
+    ; format(' . ', [])
     ).
 
 % Determine the next player
@@ -233,17 +228,11 @@ valid_move(Board, Color, (X1, Y1, X2, Y2), capturing) :-
     H1 >= H2,
     manhattan_distance((X1, Y1), (X2, Y2), 1).
 
-
 % Check if the move is one step in any direction
 one_step_move((X1, Y1), (X2, Y2)) :-
     DX is abs(X2 - X1),
     DY is abs(Y2 - Y1),
     DX + DY =:= 1.
-
-% Helper function to change the height of a piece
-change_height(Piece, NewHeight, NewPiece) :-
-    Piece =.. [Color, _],
-    NewPiece =.. [Color, NewHeight].
 
 % Apply a move to the board
 apply_move(Board, player(Color,_), (X1, Y1, X2, Y2), NewBoard) :-
@@ -278,7 +267,6 @@ apply_move(Board, capturing, (X1, Y1, X2, Y2), NewBoard) :-
     set_piece(TempBoard, X2, Y2, NewPiece, NewBoard),
     format('Applied capturing move: ~w -> ~w~n', [(X1, Y1), (X2, Y2)]).
 
-
 % Determine the type of move
 move_type(Board, Color, (X1, Y1, X2, Y2), positional) :-
     get_piece(Board, X1, Y1, Piece),
@@ -306,7 +294,7 @@ move_type(Board, Color, (X1, Y1, X2, Y2), capturing) :-
     piece_height(Piece2, H2),
     H1 >= H2.
 
-% Helper predicates
+% Auxiliary predicates
 get_piece(Board, X, Y, Piece) :-
     nth1(Y, Board, Row),
     nth1(X, Row, Piece).
@@ -320,8 +308,17 @@ set_piece(Board, X, Y, Piece, NewBoard) :-
 is_empty(Board, X, Y) :-
     get_piece(Board, X, Y, empty).
 
+length_(Length, List) :- length(List, Length).
+
+piece_color(Piece, Color) :-
+    Piece =.. [Color, _].
+
 piece_height(Piece, Height) :-
     Piece =.. [_, Height].
+
+change_height(Piece, NewHeight, NewPiece) :-
+    Piece =.. [Color, _],
+    NewPiece =.. [Color, NewHeight].
 
 manhattan_distance((X1, Y1), (X2, Y2), Distance) :-
     Distance is abs(X1 - X2) + abs(Y1 - Y2).
@@ -333,14 +330,17 @@ orthogonal_adjacency(Board, X, Y, (X2, Y)) :-
     X2 is X + 1,
     get_piece(Board, X2, Y, Piece),
     Piece \= empty.
+
 orthogonal_adjacency(Board, X, Y, (X2, Y)) :-
     X2 is X - 1,
     get_piece(Board, X2, Y, Piece),
     Piece \= empty.
+
 orthogonal_adjacency(Board, X, Y, (X, Y2)) :-
     Y2 is Y + 1,
     get_piece(Board, X, Y2, Piece),
     Piece \= empty.
+
 orthogonal_adjacency(Board, X, Y, (X, Y2)) :-
     Y2 is Y - 1,
     get_piece(Board, X, Y2, Piece),
@@ -355,9 +355,15 @@ closer_to_nearest_stack(Board, (X1, Y1), (X2, Y2)) :-
 nearest_stack(Board, (X, Y), (XN, YN)) :-
     findall((X2, Y2), (get_piece(Board, X2, Y2, Piece), Piece \= empty, (X2, Y2) \= (X, Y)), Stacks),
     maplist(manhattan_distance((X, Y)), Stacks, Distances),
-    min_list(Distances, MinDistance),
+    % min_list(Distances, MinDistance),
+    min_in_list(Distances, MinDistance),
     nth1(Index, Distances, MinDistance),
     nth1(Index, Stacks, (XN, YN)).
+
+min_in_list([Min], Min).
+min_in_list([H|T], Min) :-
+    min_in_list(T, TailMin),
+    Min is min(H, TailMin).
 
 % Custom implementation of flatten_board/2
 flatten_board(List, FlatList) :-
