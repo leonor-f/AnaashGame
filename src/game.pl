@@ -5,20 +5,24 @@
 
 % Main predicate to start the game
 play :-
-    write('+-------------------------+'), nl,
-    write('|          Anaash         |'), nl,
-    write('+-------------------------+'), nl,
-    write('| 1. Human vs Human       |'), nl,
-    write('| 2. Human vs Computer    |'), nl,
-    write('| 3. Computer vs Human    |'), nl,
-    write('| 4. Computer vs Computer |'), nl,
-    write('| 5. Exit                 |'), nl,
-    write('+-------------------------+'), nl,
+    write('+--------------------------+'), nl,
+    write('|          Anaash          |'), nl,
+    write('+--------------------------+'), nl,
+    write('| 0. Rules                 |'), nl,
+    write('| 1. Human vs Human        |'), nl,
+    write('| 2. Human vs Computer     |'), nl,
+    write('| 3. Computer vs Human     |'), nl,
+    write('| 4. Computer vs Computer  |'), nl,
+    write('| 5. Exit                  |'), nl,
+    write('+--------------------------+'), nl,
     write('Choose an option: '),
     read(Choice),
     process_choice(Choice).
 
 % Process user choice from the main menu
+process_choice(0) :-
+    display_rules,
+    play.
 process_choice(1) :-
     start_game(player(red, human), player(blue, human)).
 process_choice(2) :-
@@ -36,6 +40,25 @@ process_choice(5) :-
 process_choice(_) :-
     write('Invalid choice. Please try again.'), nl,
     play.
+
+% Display the rules of the game
+display_rules :-
+    write('----------------------------------------------------------------------------------'), nl,
+    write('                                   Anaash Rules                                   '), nl,
+    write('----------------------------------------------------------------------------------'), nl, nl,
+    write('# INTRODUCTION'), nl,
+    write('The 2 players, *Red* and *Blue*, alternate turns moving 1 stack each, starting with *Red*.'), nl,
+    write('A player must move if possible; if not, *skip his turn*.'), nl,
+    write('At least 1 player always has a *valid move*.'), nl, nl,
+    write('# POSITIONAL MOVES'), nl,
+    write('Move 1 of your stacks to an adjacent, unoccupied square *1 step closer (Manhattan distance)* to its nearest stack.'), nl,
+    write('Only stacks with *no orthogonal adjacencies* can make this move.'), nl, nl,
+    write('# STACKING MOVES'), nl,
+    write('Move 1 of your stacks onto an *orthogonally adjacent, friendly* stack of >/= height.'), nl, nl,
+    write('# CAPTURING MOVES'), nl,
+    write('Capture an *orthogonally adjacent enemy* stack of </= height.'), nl, nl,
+    write('# GOAL OF THE GAME'), nl,
+    write('To win you must *capture all enemy checkers*.'), nl, nl.
 
 % Prompt user to select difficulty level
 select_difficulty(Level) :-
@@ -127,7 +150,9 @@ evaluate_move(GameState, Move, Value) :-
 game_loop(GameState) :-
     display_game(GameState),
     ( game_over(GameState, Winner) ->
-        format('Game over! Winner: ~w~n', [Winner]),
+        write('---------------------------'), nl,
+        format('  GAME OVER! Winner: ~w~n', [Winner]),
+        write('---------------------------'), nl,
         play
     ; GameState = game(_, CurrentPlayer, _),
       valid_moves(GameState, Moves),
@@ -202,6 +227,8 @@ valid_move(Board, player(Color, _), (X1, Y1, X2, Y2)) :-
     move_type(Board, Color, (X1, Y1, X2, Y2), Type),
     valid_move(Board, Color, (X1, Y1, X2, Y2), Type).
 
+/* Move one of the stacks to an orthogonally adjacent, unoccupied square which is one square closer
+(Manhattan distance) to its nearest stack, regardless of color or height */
 valid_move(Board, Color, (X1, Y1, X2, Y2), positional) :-
     get_piece(Board, X1, Y1, Piece),
     piece_color(Piece, Color),
@@ -210,6 +237,7 @@ valid_move(Board, Color, (X1, Y1, X2, Y2), positional) :-
     no_orthogonal_adjacencies(Board, X1, Y1),
     closer_to_nearest_stack(Board, (X1, Y1), (X2, Y2)).
 
+% Move one of the stacks onto an orthogonally adjacent, friendly stack of equal or larger height
 valid_move(Board, Color, (X1, Y1, X2, Y2), stacking) :-
     get_piece(Board, X1, Y1, Piece1),
     piece_color(Piece1, Color),
@@ -220,6 +248,7 @@ valid_move(Board, Color, (X1, Y1, X2, Y2), stacking) :-
     H1 =< H2,
     manhattan_distance((X1, Y1), (X2, Y2), 1).
 
+% Capture an orthogonally adjacent enemy stack of equal or smaller height
 valid_move(Board, Color, (X1, Y1, X2, Y2), capturing) :-
     get_piece(Board, X1, Y1, Piece1),
     piece_color(Piece1, Color),
