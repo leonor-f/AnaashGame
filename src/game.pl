@@ -5,12 +5,15 @@
 
 % Main predicate to start the game
 play :-
-    write('=== Anaash ==='), nl,
-    write('1. Human vs Human'), nl,
-    write('2. Human vs Computer'), nl,
-    write('3. Computer vs Human'), nl,
-    write('4. Computer vs Computer'), nl,
-    write('5. Exit'), nl,
+    write('+-------------------------+'), nl,
+    write('|          Anaash         |'), nl,
+    write('+-------------------------+'), nl,
+    write('| 1. Human vs Human       |'), nl,
+    write('| 2. Human vs Computer    |'), nl,
+    write('| 3. Computer vs Human    |'), nl,
+    write('| 4. Computer vs Computer |'), nl,
+    write('| 5. Exit                 |'), nl,
+    write('+-------------------------+'), nl,
     write('Choose an option: '),
     read(Choice),
     process_choice(Choice).
