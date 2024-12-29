@@ -3,8 +3,14 @@
 :- use_module(library(format)).
 :- use_module(library(random)).
 
+% Define the colors using ANSI escape codes
+color(red, '\e[31m\e[0m').    % Red
+color(blue, '\e[34m\e[0m').   % Blue
+color(empty, '\e[37m\e[0m').  % Grey
+
 % Main predicate to start the game
 play :-
+    nl,
     write('+--------------------------+'), nl,
     write('|          Anaash          |'), nl,
     write('+--------------------------+'), nl,
@@ -83,7 +89,9 @@ initial_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
 % Display the current game state (player and board)
 display_game(game(Board, CurrentPlayer, _)) :-
     display_board(Board),
-    format('Current player: ~w~n', [CurrentPlayer]).
+    format('                                     ', []),
+    CurrentPlayer = player(Color, _),
+    format('~w player\'s turn!~n', [Color]), nl.
 
 % Validate and execute a move
 move(game(Board, CurrentPlayer, Players), Move, game(NewBoard, NextPlayer, Players)) :-
@@ -150,21 +158,23 @@ evaluate_move(GameState, Move, Value) :-
 game_loop(GameState) :-
     display_game(GameState),
     ( game_over(GameState, Winner) ->
+        format('                                 ', []),
         write('---------------------------'), nl,
+        format('                                 ', []),
         format('  GAME OVER! Winner: ~w~n', [Winner]),
+        format('                                 ', []),
         write('---------------------------'), nl,
         play
     ; GameState = game(_, CurrentPlayer, _),
       valid_moves(GameState, Moves),
       % Extract Color from CurrentPlayer
       CurrentPlayer = player(Color, _),
-      format('Valid moves for ~w: ~w~n', [Color, Moves]),
+      format('Valid moves for ~w: ~w~n', [Color, Moves]), nl,
       ( Moves = [] ->
           format('No valid moves for ~w. Skipping turn.~n', [CurrentPlayer]),
           next_player(GameState, NewGameState),
           game_loop(NewGameState)
-      ; format('~w\'s turn.~n', [CurrentPlayer]),
-        choose_move(GameState, CurrentPlayer, Move),
+      ; choose_move(GameState, CurrentPlayer, Move),
         format('Move chosen: ~w~n', [Move]),
         move(GameState, Move, NewGameState),
         game_loop(NewGameState)
@@ -196,13 +206,14 @@ display_board(Board) :-
     maplist(display_row, Board).
 
 display_row(Row) :-
+    format('                                    ', []),
     maplist(display_cell, Row),
     nl.
 
 display_cell(Cell) :-
-    ( Cell = red(H) -> format(' r~d ', [H])
-    ; Cell = blue(H) -> format(' b~d ', [H])
-    ; format(' . ', [])
+    ( Cell = red(H) -> format('\e[41;30m r~d \e[0m', [H])
+    ; Cell = blue(H) -> format('\e[44;30m b~d \e[0m', [H])
+    ; format('\e[47;30m . \e[0m', [])
     ).
 
 % Determine the next player
@@ -275,8 +286,7 @@ apply_move(Board, player(Color,_), (X1, Y1, X2, Y2), NewBoard) :-
 apply_move(Board, positional, (X1, Y1, X2, Y2), NewBoard) :-
     get_piece(Board, X1, Y1, Piece),
     set_piece(Board, X1, Y1, empty, TempBoard),
-    set_piece(TempBoard, X2, Y2, Piece, NewBoard),
-    format('Applied positional move: ~w -> ~w~n', [(X1, Y1), (X2, Y2)]).
+    set_piece(TempBoard, X2, Y2, Piece, NewBoard).
 
 % Apply a stacking move to the board
 apply_move(Board, stacking, (X1, Y1, X2, Y2), NewBoard) :-
@@ -287,8 +297,7 @@ apply_move(Board, stacking, (X1, Y1, X2, Y2), NewBoard) :-
     NewHeight is H1 + H2,
     change_height(Piece2, NewHeight, NewPiece),
     set_piece(Board, X1, Y1, empty, TempBoard),
-    set_piece(TempBoard, X2, Y2, NewPiece, NewBoard),
-    format('Applied stacking move: ~w -> ~w~n', [(X1, Y1), (X2, Y2)]).
+    set_piece(TempBoard, X2, Y2, NewPiece, NewBoard).
 
 % Apply a capturing move to the board
 apply_move(Board, capturing, (X1, Y1, X2, Y2), NewBoard) :-
@@ -296,8 +305,7 @@ apply_move(Board, capturing, (X1, Y1, X2, Y2), NewBoard) :-
     piece_height(Piece1, H1),
     set_piece(Board, X1, Y1, empty, TempBoard),
     change_height(Piece1, H1, NewPiece),
-    set_piece(TempBoard, X2, Y2, NewPiece, NewBoard),
-    format('Applied capturing move: ~w -> ~w~n', [(X1, Y1), (X2, Y2)]).
+    set_piece(TempBoard, X2, Y2, NewPiece, NewBoard).
 
 % Determine the type of move
 move_type(Board, Color, (X1, Y1, X2, Y2), positional) :-
