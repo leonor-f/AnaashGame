@@ -213,7 +213,7 @@ display_row(Row) :-
 display_cell(Cell) :-
     ( Cell = red(H) -> format('\e[41;30m r~d \e[0m', [H])
     ; Cell = blue(H) -> format('\e[44;30m b~d \e[0m', [H])
-    ; format('\e[47;30m . \e[0m', [])
+    ; format('\e[47;30m  . \e[0m', [])
     ).
 
 % Determine the next player
