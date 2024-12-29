@@ -89,7 +89,7 @@ initial_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
 % Display the current game state (player and board)
 display_game(game(Board, CurrentPlayer, _)) :-
     display_board(Board),
-    format('                                     ', []),
+    format('                                       ', []),
     CurrentPlayer = player(Color, _),
     format('~w player\'s turn!~n', [Color]), nl.
 
@@ -158,11 +158,11 @@ evaluate_move(GameState, Move, Value) :-
 game_loop(GameState) :-
     display_game(GameState),
     ( game_over(GameState, Winner) ->
-        format('                                 ', []),
+        format('                                   ', []),
         write('---------------------------'), nl,
-        format('                                 ', []),
+        format('                                   ', []),
         format('  GAME OVER! Winner: ~w~n', [Winner]),
-        format('                                 ', []),
+        format('                                   ', []),
         write('---------------------------'), nl,
         play
     ; GameState = game(_, CurrentPlayer, _),
