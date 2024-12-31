@@ -89,7 +89,7 @@ initial_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
 % Display the current game state (player and board)
 display_game(game(Board, CurrentPlayer, _)) :-
     display_board(Board),
-    format('                                       ', []),
+    format('                                             ', []),
     CurrentPlayer = player(Color, _),
     format('~w player\'s turn!~n', [Color]), nl.
 
@@ -102,7 +102,7 @@ move(game(Board, CurrentPlayer, Players), Move, game(NewBoard, NextPlayer, Playe
 % Generate a list of all valid moves
 valid_moves(game(Board, player(Color, _), _), Moves) :-
     findall((X1, Y1, X2, Y2), 
-        (between(1, 6, X1), between(1, 6, Y1), 
+        (between(1, 6, X1), between(1, 6, Y1),
          get_piece(Board, X1, Y1, Piece),
          piece_color(Piece, Color),
          between(1, 6, X2), between(1, 6, Y2), 
@@ -201,14 +201,31 @@ fill_row(Row, RowIndex) :-
 fill_cell(RowIndex, Cell, ColIndex) :-
     ( (RowIndex + ColIndex) mod 2 =:= 0 -> Cell = red(1) ; Cell = blue(1) ).
 
-% Display the board
 display_board(Board) :-
-    maplist(display_row, Board).
+    length(Board, Size),
+    format('                                       ', []),
+    display_top_coordinates(Size),
+    display_rows(Board, 1).
 
-display_row(Row) :-
-    format('                                    ', []),
-    maplist(display_cell, Row),
+% Display the top coordinates
+display_top_coordinates(Size) :-
+    format('    ', []),
+    forall(between(1, Size, X), format('  ~w ', [X])),
     nl.
+
+% Display each row with the left coordinates
+display_rows([], _).
+display_rows([Row|Rows], N) :-
+    format('                                       ', []),
+    format('~w | ', [N]),
+    display_row(Row),
+    nl,
+    N1 is N + 1,
+    display_rows(Rows, N1).
+
+% Display a single row
+display_row(Row) :-
+    maplist(display_cell, Row).
 
 display_cell(Cell) :-
     ( Cell = red(H) -> format('\e[41;30m r~d \e[0m', [H])
