@@ -158,11 +158,11 @@ evaluate_move(GameState, Move, Value) :-
 game_loop(GameState) :-
     display_game(GameState),
     ( game_over(GameState, Winner) ->
-        format('                                   ', []),
+        format('                                       ', []),
         write('---------------------------'), nl,
-        format('                                   ', []),
+        format('                                       ', []),
         format('  GAME OVER! Winner: ~w~n', [Winner]),
-        format('                                   ', []),
+        format('                                       ', []),
         write('---------------------------'), nl,
         play
     ; GameState = game(_, CurrentPlayer, _),
@@ -210,8 +210,16 @@ display_board(Board) :-
 % Display the top coordinates
 display_top_coordinates(Size) :-
     format('    ', []),
-    forall(between(1, Size, X), format('  ~w ', [X])),
+    display_top_coordinates_helper(1, Size),
     nl.
+
+display_top_coordinates_helper(Current, Size) :-
+    Current =< Size,
+    format('  ~w ', [Current]),
+    Next is Current + 1,
+    display_top_coordinates_helper(Next, Size).
+display_top_coordinates_helper(Current, Size) :-
+    Current > Size.
 
 % Display each row with the left coordinates
 display_rows([], _).
