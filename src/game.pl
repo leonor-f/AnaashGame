@@ -30,17 +30,21 @@ process_choice(0) :-
     display_rules,
     play.
 process_choice(1) :-
-    start_game(player(red, human), player(blue, human)).
+    select_board_size(Size),
+    start_game(player(red, human), player(blue, human), Size).
 process_choice(2) :-
+    select_board_size(Size),
     select_difficulty(Level),
-    start_game(player(red, human), player(blue, computer(Level))).
+    start_game(player(red, human), player(blue, computer(Level)), Size).
 process_choice(3) :-
+    select_board_size(Size),
     select_difficulty(Level),
-    start_game(player(red, computer(Level)), player(blue, human)).
+    start_game(player(red, computer(Level)), player(blue, human), Size).
 process_choice(4) :-
+    select_board_size(Size),
     select_difficulty(Level1),
     select_difficulty(Level2),
-    start_game(player(red, computer(Level1)), player(blue, computer(Level2))).
+    start_game(player(red, computer(Level1)), player(blue, computer(Level2)), Size).
 process_choice(5) :-
     write('Goodbye!'), nl.
 process_choice(_) :-
@@ -77,14 +81,22 @@ select_difficulty(Level) :-
     write('Invalid choice. Please try again.'), nl,
     select_difficulty(Level).
 
-% Start the game with the given players
-start_game(Player1, Player2) :-
-    initial_state([Player1, Player2], GameState),
+% Prompt user to select board size
+select_board_size(Size) :-
+    write('Select board size:'), nl,
+    write('1. 6x6'), nl,
+    write('2. 8x8'), nl,
+    read(Choice),
+    (Choice = 1 -> Size = 6 ; Choice = 2 -> Size = 8 ; write('Invalid choice. Defaulting to 6x6.'), nl, Size = 6).
+
+% Start the game with the given players and board size
+start_game(Player1, Player2, Size) :-
+    initial_state([Player1, Player2], Size, GameState),
     game_loop(GameState).
 
 % Initialize the game state
-initial_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    board(6, Board). % Default board size is 6x6
+initial_state([Player1, Player2], Size, game(Board, Player1, [Player1, Player2])) :-
+    board(Size, Board). % Default board size is 6x6
 
 % Display the current game state (player and board)
 display_game(game(Board, CurrentPlayer, _)) :-
@@ -101,14 +113,16 @@ move(game(Board, CurrentPlayer, Players), Move, game(NewBoard, NextPlayer, Playe
 
 % Generate a list of all valid moves
 valid_moves(game(Board, player(Color, _), _), Moves) :-
+    length(Board, Size),
     findall((X1, Y1, X2, Y2), 
-        (between(1, 6, X1), between(1, 6, Y1),
+        (between(1, Size, X1), between(1, Size, Y1),
          get_piece(Board, X1, Y1, Piece),
          piece_color(Piece, Color),
-         between(1, 6, X2), between(1, 6, Y2), 
+         between(1, Size, X2), between(1, Size, Y2), 
          one_step_move((X1, Y1), (X2, Y2)),
          valid_move(Board, player(Color, _), (X1, Y1, X2, Y2))),
         Moves).
+
 
 % Check if the game is over and determine the winner
 game_over(game(Board, _, _), Winner) :-
@@ -189,18 +203,21 @@ next_player(game(Board, CurrentPlayer, Players), game(Board, NextPlayer, Players
 board(Size, Board) :-
     length(Board, Size),
     maplist(length_(Size), Board),
-    fill_board(Board).
+    fill_board(Board, Size).
 
 % Fill the board with the initial checkered pattern
-fill_board(Board) :-
-    maplist(fill_row, Board, [1,2,3,4,5,6]).
+fill_board(Board, Size) :-
+    numlist(1, Size, Rows),
+    maplist(fill_row(Size), Board, Rows).
 
-fill_row(Row, RowIndex) :-
-    maplist(fill_cell(RowIndex), Row, [1,2,3,4,5,6]).
+fill_row(Size, Row, RowIndex) :-
+    numlist(1, Size, Cols),
+    maplist(fill_cell(RowIndex), Row, Cols).
 
 fill_cell(RowIndex, Cell, ColIndex) :-
     ( (RowIndex + ColIndex) mod 2 =:= 0 -> Cell = red(1) ; Cell = blue(1) ).
 
+% Update display functions to dynamically handle board size
 display_board(Board) :-
     length(Board, Size),
     format('                                       ', []),
