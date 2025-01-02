@@ -222,7 +222,7 @@ display_board(Board) :-
     length(Board, Size),
     format('                                       ', []),
     display_top_coordinates(Size),
-    display_rows(Board, 1).
+    display_rows(Board, Size).
 
 % Display the top coordinates
 display_top_coordinates(Size) :-
@@ -239,14 +239,18 @@ display_top_coordinates_helper(Current, Size) :-
     Current > Size.
 
 % Display each row with the left coordinates
-display_rows([], _).
-display_rows([Row|Rows], N) :-
+display_rows(Board, Size) :-
+    reverse(Board, ReversedBoard),
+    display_rows_helper(ReversedBoard, Size).
+
+display_rows_helper([], _).
+display_rows_helper([Row|Rows], N) :-
     format('                                       ', []),
     format('~w | ', [N]),
     display_row(Row),
     nl,
-    N1 is N + 1,
-    display_rows(Rows, N1).
+    N1 is N - 1,
+    display_rows_helper(Rows, N1).
 
 % Display a single row
 display_row(Row) :-
