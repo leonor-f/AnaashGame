@@ -228,10 +228,31 @@ game_over(game(Board, _, _), Winner) :-
 %   - Counts the pieces of the player and their opponent.
 %   - The value is calculated as PlayerCount - OpponentCount.
 value(game(Board, _, _), player(Color, _), Value) :-
-    count_pieces(Board, Color, PlayerCount),
+    total_height(Board, Color, PlayerHeight),
     opponent(Color, Opponent),
-    count_pieces(Board, Opponent, OpponentCount),
-    Value is PlayerCount - OpponentCount.
+    total_height(Board, Opponent, OpponentHeight),
+    Value is PlayerHeight - OpponentHeight.
+
+% Calculates the total height of the pieces for a given color.
+total_height(Board, Color, Height) :-
+    findall(PieceValue,
+        (member(Row, Board),
+         member(Piece, Row),
+         piece_color(Piece, Color),
+         piece_height(Piece, PieceHeight),
+         piece_value(PieceHeight, PieceValue)),
+        Values),
+    sum_list(Values, Height).
+
+% Calculates the value of a piece based on its height.
+piece_value(Height, Value) :-
+    Value is 2 * Height - 1.
+
+% Sums all the elements in a list.
+sum_list([], 0).
+sum_list([H|T], Sum) :-
+    sum_list(T, Rest),
+    Sum is H + Rest.
 
 % choose_move(+GameState, +Player, -Move)
 % -------------------------------------------------------------------------
@@ -429,7 +450,8 @@ fill_cell_color(RowIndex, ColIndex, blue(1)) :-
 display_board(Board) :-
     length(Board, Size),
     display_top_coordinates(Size),
-    write('  -------------------------'), nl,
+    LineLength is Size * 4 + 4, 
+    format('  ~`-t~*|', [LineLength]), nl,
     display_rows(Board, Size).
 
 % Display the top coordinates
