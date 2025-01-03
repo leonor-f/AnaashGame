@@ -48,11 +48,9 @@ process_choice(2) :-
     enter_board_size(Size),
     select_difficulty(Level),
     start_game(player(red, human), player(blue, computer(Level)), Size).
-    start_game(player(red, human), player(blue, computer(Level)), Size).
 process_choice(3) :-
     enter_board_size(Size),
     select_difficulty(Level),
-    start_game(player(red, computer(Level)), player(blue, human), Size).
     start_game(player(red, computer(Level)), player(blue, human), Size).
 process_choice(4) :-
     enter_board_size(Size),
@@ -148,13 +146,8 @@ initial_state([Player1, Player2], Size, game(Board, Player1, [Player1, Player2])
 %   - Indicates the current player whose turn it is to move.
 display_game(game(Board, CurrentPlayer, _)) :-
     display_board(Board),
-    format('Current player: ~w~n', [CurrentPlayer]).
-
-/*display_game(game(Board, CurrentPlayer, _)) :-
-    display_board(Board),
-    format('                                             ', []),
     CurrentPlayer = player(Color, _),
-    format('~w player\'s turn!~n', [Color]), nl.*/
+    format('~n~w player\'s turn!~n', [Color]), nl.
 
 % move(+GameState, +Move, -NewGameState)
 % -------------------------------------------------------------------------
@@ -314,7 +307,7 @@ choose_greedy_move(GameState, Move) :-
 %   - Checks if the move is among the valid options.
 %   - Repeats the prompt if the input is invalid or has syntax errors.
 read_move(GameState, Move) :-
-    valid_moves(GameState, Moves),
+    valid_moves(GameState, Moves), nl,
     write('Enter your move in the format (X1, Y1, X2, Y2): '), nl,
     catch(read(UserInput), _, (write('Syntax error. Try again.'), nl, read_move(GameState, Move))),
     (member(UserInput, Moves) -> Move = UserInput; write('Invalid move. Try again.'), nl, read_move(GameState, Move)).
@@ -345,36 +338,33 @@ evaluate_move(GameState, Move, Value) :-
 %   - Checks for game-over conditions and declares the winner.
 %   - Alternates turns between players until the game ends.
 game_loop(GameState) :-
-    display_game(GameState),
+    GameState = game(Board, CurrentPlayer, _),
     ( game_over(GameState, Winner) ->
-        format('                                       ', []),
+        display_board(Board), nl,
         write('---------------------------'), nl,
-        format('                                       ', []),
         format('  GAME OVER! Winner: ~w~n', [Winner]),
-        format('                                       ', []),
         write('---------------------------'), nl,
         play
-    ; GameState = game(_, CurrentPlayer, _),
+    ; display_game(GameState),
+      % CurrentPlayer = player(Color, _),
       valid_moves(GameState, Moves),
       handle_moves(GameState, Moves, CurrentPlayer)
     ).
 
-handle_moves(GameState, [], CurrentPlayer) :-
-    format('No valid moves for ~w. Skipping turn.~n', [CurrentPlayer]),
+handle_moves(GameState, [], player(Color, _)) :-
+    format('No valid moves for ~w. Skipping turn.~n', [Color]),
     next_player(GameState, NewGameState),
     game_loop(NewGameState).
 
-handle_moves(GameState, Moves, CurrentPlayer) :-
+handle_moves(GameState, Moves, player(Color, _)) :-
     GameState = game(Board, CurrentPlayer, _),
-    CurrentPlayer = player(Color, _),
     format('Valid moves for ~w: ~w~n', [Color, Moves]),
-    format('~w\'s turn.~n', [CurrentPlayer]),
     choose_move(GameState, CurrentPlayer, Move),
-    format('Chosen move: ~w~n', [Move]),
+    format('~nChosen move: ~w~n', [Move]),
     move(GameState, Move, NewGameState),
     move_type(Board, Color, Move, Type),
     Move = (X1, Y1, X2, Y2),
-    format('Applied ~w move: ~w -> ~w~n', [Type, (X1, Y1), (X2, Y2)]),
+    format('Applied ~w move: ~w -> ~w~n~n', [Type, (X1, Y1), (X2, Y2)]),
     game_loop(NewGameState).
 
 % next_player(+GameState, -NewGameState)
@@ -402,7 +392,7 @@ next_player([Player1, Player2], Player2, Player1).
 board(Size, Board) :-
     length(Board, Size),
     maplist(length_(Size), Board),
-    fill_board(Board, Size).
+    fill_board(Board).
 
 % fill_board(-Board)
 % -------------------------------------------------------------------------
@@ -438,8 +428,8 @@ fill_cell_color(RowIndex, ColIndex, blue(1)) :-
 %   +Board : The board to display.
 display_board(Board) :-
     length(Board, Size),
-    format('                                       ', []),
     display_top_coordinates(Size),
+    write('  -------------------------'), nl,
     display_rows(Board, Size).
 
 % Display the top coordinates
@@ -458,12 +448,11 @@ display_top_coordinates_helper(Current, Size) :-
 
 % Display each row with the left coordinates
 display_rows(Board, Size) :-
-    reverse(Board, ReversedBoard),
-    display_rows_helper(ReversedBoard, Size).
+    % reverse(Board, ReversedBoard),
+    display_rows_helper(Board, Size).
 
 display_rows_helper([], _).
 display_rows_helper([Row|Rows], N) :-
-    format('                                       ', []),
     format('~w | ', [N]),
     display_row(Row),
     nl,
@@ -872,8 +861,8 @@ min_in_list([H|T], Min) :-
 % Red plays first
 first_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
     % board(6, Board),
-    format('Chosen move: (6,5,6,6)~n'), nl,
-    format('Applied capturing move: 6,5 -> 6,6~n'),
+    format('~nChosen move: (6,5,6,6)~n~n'),
+    format('Applied capturing move: 6,5 -> 6,6~n~n'),
     board(6, [
         [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
         [blue(1), red(1), blue(1), red(1), blue(1), empty],
@@ -887,7 +876,7 @@ first_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
 
 % Intermediate game states
 stacking_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    format('Chosen move: (4,5,5,5)~n'), nl,
+    format('Chosen move: (4,5,5,5)~n~n'),
     format('Applied stacking move: 4,5 -> 5,5~n'),
     Board = [
         [red(1), blue(1), red(1), blue(1), empty, empty],
@@ -899,7 +888,7 @@ stacking_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
     ].
 
 positional_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    format('Chosen move: (6,1,6,2)~n'), nl,
+    format('Chosen move: (6,1,6,2)~n~n'),
     format('Applied positional move: 6,1 -> 6,2~n'),
     Board = [
         [red(1), empty, red(1), blue(1), empty, empty],
@@ -911,7 +900,7 @@ positional_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
     ].
 
 capturing_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    format('Chosen move: (2,2,2,1)~n'), nl,
+    format('Chosen move: (2,2,2,1)~n~n'),
     format('Applied capturing move: 2,2 -> 2,1~n'),
     Board = [
         [empty, empty, empty, empty, empty, empty],
@@ -924,7 +913,7 @@ capturing_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
 
 % Near-final game state
 near_final_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    format('Chosen move: (1,2,2,2)~n'), nl,
+    format('Chosen move: (1,2,2,2)~n~n'),
     format('Applied positional move: 1,2 -> 2,2~n'),
     Board = [
         [empty, empty, empty, empty, empty, empty],
@@ -937,7 +926,7 @@ near_final_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :
 
 % Final game state
 final_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    format('Chosen move: (2,1,2,2)~n'), nl,
+    format('Chosen move: (2,1,2,2)~n~n'),
     format('Applied capturing move: 2,1 -> 2,2~n'),
     Board = [
         [empty, empty, empty, empty, empty, empty],
