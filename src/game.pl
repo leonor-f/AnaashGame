@@ -2,10 +2,15 @@
 :- use_module(library(between)).
 :- use_module(library(random)).
 
+% Define the colors using ANSI escape codes
+color(red, '\e[31m\e[0m').    % Red
+color(blue, '\e[34m\e[0m').   % Blue
+color(empty, '\e[37m\e[0m').  % Grey
+
 % play/0
 % -------------------------------------------------------------------------
 % Purpose:
-%   Main predicate to start the game. Displays the game menu, prompts the
+%   Displays the game menu, prompts the
 %   user for a choice, and processes the choice using the process_choice/1 predicate.
 %
 % Details / Strategy:
@@ -14,6 +19,7 @@
 %   - Based on user input, the game type and configuration are initialized.
 %   - Implements tail recursion to allow the user to return to the main menu after a game ends.
 play :-
+    nl,
     write('+--------------------------+'), nl,
     write('|          Anaash          |'), nl,
     write('+--------------------------+'), nl,
@@ -42,9 +48,11 @@ process_choice(2) :-
     enter_board_size(Size),
     select_difficulty(Level),
     start_game(player(red, human), player(blue, computer(Level)), Size).
+    start_game(player(red, human), player(blue, computer(Level)), Size).
 process_choice(3) :-
     enter_board_size(Size),
     select_difficulty(Level),
+    start_game(player(red, computer(Level)), player(blue, human), Size).
     start_game(player(red, computer(Level)), player(blue, human), Size).
 process_choice(4) :-
     enter_board_size(Size),
@@ -142,6 +150,12 @@ display_game(game(Board, CurrentPlayer, _)) :-
     display_board(Board),
     format('Current player: ~w~n', [CurrentPlayer]).
 
+/*display_game(game(Board, CurrentPlayer, _)) :-
+    display_board(Board),
+    format('                                             ', []),
+    CurrentPlayer = player(Color, _),
+    format('~w player\'s turn!~n', [Color]), nl.*/
+
 % move(+GameState, +Move, -NewGameState)
 % -------------------------------------------------------------------------
 % Purpose:
@@ -182,6 +196,7 @@ valid_moves(game(Board, player(Color, _), _), ListOfMoves) :-
         (between(1, Size, X1), between(1, Size, Y1), 
          get_piece(Board, X1, Y1, Piece),
          piece_color(Piece, Color),
+         between(1, Size, X2), between(1, Size, Y2), 
          between(1, Size, X2), between(1, Size, Y2), 
          one_step_move((X1, Y1), (X2, Y2)),
          valid_move(Board, player(Color, _), (X1, Y1, X2, Y2))),
@@ -332,8 +347,11 @@ evaluate_move(GameState, Move, Value) :-
 game_loop(GameState) :-
     display_game(GameState),
     ( game_over(GameState, Winner) ->
+        format('                                       ', []),
         write('---------------------------'), nl,
+        format('                                       ', []),
         format('  GAME OVER! Winner: ~w~n', [Winner]),
+        format('                                       ', []),
         write('---------------------------'), nl,
         play
     ; GameState = game(_, CurrentPlayer, _),
@@ -384,7 +402,7 @@ next_player([Player1, Player2], Player2, Player1).
 board(Size, Board) :-
     length(Board, Size),
     maplist(length_(Size), Board),
-    fill_board(Board).
+    fill_board(Board, Size).
 
 % fill_board(-Board)
 % -------------------------------------------------------------------------
@@ -419,15 +437,52 @@ fill_cell_color(RowIndex, ColIndex, blue(1)) :-
 % Parameters:
 %   +Board : The board to display.
 display_board(Board) :-
-    maplist(display_row, Board).
+    length(Board, Size),
+    format('                                       ', []),
+    display_top_coordinates(Size),
+    display_rows(Board, Size).
 
-display_row(Row) :-
-    maplist(display_cell, Row),
+% Display the top coordinates
+display_top_coordinates(Size) :-
+    format('    ', []),
+    display_top_coordinates_helper(1, Size),
     nl.
+
+display_top_coordinates_helper(Current, Size) :-
+    Current =< Size,
+    format('  ~w ', [Current]),
+    Next is Current + 1,
+    display_top_coordinates_helper(Next, Size).
+display_top_coordinates_helper(Current, Size) :-
+    Current > Size.
+
+% Display each row with the left coordinates
+display_rows(Board, Size) :-
+    reverse(Board, ReversedBoard),
+    display_rows_helper(ReversedBoard, Size).
+
+display_rows_helper([], _).
+display_rows_helper([Row|Rows], N) :-
+    format('                                       ', []),
+    format('~w | ', [N]),
+    display_row(Row),
+    nl,
+    N1 is N - 1,
+    display_rows_helper(Rows, N1).
+
+% Display a single row
+display_row(Row) :-
+    maplist(display_cell, Row).
 
 display_cell(red(H)) :- format(' r~d ', [H]).
 display_cell(blue(H)) :- format(' b~d ', [H]).
 display_cell(empty) :- format('  . ', []).
+
+/*display_cell(Cell) :-
+    ( Cell = red(H) -> format('\e[41;30m r~d \e[0m', [H])
+    ; Cell = blue(H) -> format('\e[44;30m b~d \e[0m', [H])
+    ; format('\e[47;30m  . \e[0m', [])
+    ).*/
 
 % count_pieces(+Board, +Color, -Count)
 % -------------------------------------------------------------------------
