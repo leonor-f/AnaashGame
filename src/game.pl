@@ -78,7 +78,7 @@ select_difficulty(Level) :-
     write('1. Random'), nl,
     write('2. Greedy'), nl,
     read(Level),
-    (Level = 1 ; Level = 2), !.
+    member(Level, [1, 2]), !.
 select_difficulty(Level) :-
     write('Invalid choice. Please try again.'), nl,
     select_difficulty(Level).
@@ -178,24 +178,19 @@ valid_moves(game(Board, player(Color, _), _), ListOfMoves) :-
 % game_over(+GameState, -Winner)
 % -------------------------------------------------------------------------
 % Purpose:
-%   Checks whether the game is over and identifies the winner, if any.
+%   Checks whether the game is over and identifies the winner.
 %
 % Parameters:
 %   +GameState : The current game state.
-%   -Winner    : The winner of the game (red or blue), or fails if the game
-%                is not yet over.
+%   -Winner    : The winner of the game (red or blue).
 %
 % Details:
 %   - The game is over if one players pieces are completely captured.
 %   - Winner is set to the color of the player with remaining pieces.
 game_over(game(Board, _, _), Winner) :-
-    count_pieces(Board, red, RedCount),
-    count_pieces(Board, blue, BlueCount),
-    (RedCount = 0 -> Winner = blue ;
-     BlueCount = 0 -> Winner = red ;
-     fail).
-
-% value(+GameState, +Player, -Value)
+    count_pieces(Board, red, 0), !, Winner = blue.
+game_over(game(Board, _, _), Winner) :-
+    count_pieces(Board, blue, 0), !, Winner = red.
 % -------------------------------------------------------------------------
 % Purpose:
 %   Evaluates the current game state for a specified player, providing a
@@ -235,8 +230,12 @@ choose_move(GameState, player(_, human), Move) :-
     read_move(GameState, Move).
 
 choose_move(GameState, player(_, computer(Level)), Move) :-
-    (Level = 1 -> choose_random_move(GameState, Move)
-    ; Level = 2 -> choose_greedy_move(GameState, Move)).
+    choose_move_by_level(Level, GameState, Move).
+
+choose_move_by_level(1, GameState, Move) :-
+    choose_random_move(GameState, Move).
+choose_move_by_level(2, GameState, Move) :-
+    choose_greedy_move(GameState, Move).
 
 % choose_random_move(+GameState, -Move)
 % -------------------------------------------------------------------------
@@ -322,24 +321,28 @@ game_loop(GameState) :-
         format('  GAME OVER! Winner: ~w~n', [Winner]),
         write('---------------------------'), nl,
         play
-    ; GameState = game(Board, CurrentPlayer, _),
+    ; GameState = game(_, CurrentPlayer, _),
       valid_moves(GameState, Moves),
-      CurrentPlayer = player(Color, _),
-      format('Valid moves for ~w: ~w~n', [Color, Moves]),
-      ( Moves = [] ->
-          format('No valid moves for ~w. Skipping turn.~n', [CurrentPlayer]),
-          next_player(GameState, NewGameState),
-          game_loop(NewGameState)
-      ; format('~w\'s turn.~n', [CurrentPlayer]),
-        choose_move(GameState, CurrentPlayer, Move),
-        format('Chosen move: ~w~n', [Move]),
-        move(GameState, Move, NewGameState),
-        move_type(Board, Color, Move, Type),
-        Move = (X1, Y1, X2, Y2),
-        format('Applied ~w move: ~w -> ~w~n', [Type, (X1, Y1), (X2, Y2)]),
-        game_loop(NewGameState)
-      )
+      handle_moves(GameState, Moves, CurrentPlayer)
     ).
+
+handle_moves(GameState, [], CurrentPlayer) :-
+    format('No valid moves for ~w. Skipping turn.~n', [CurrentPlayer]),
+    next_player(GameState, NewGameState),
+    game_loop(NewGameState).
+
+handle_moves(GameState, Moves, CurrentPlayer) :-
+    GameState = game(Board, CurrentPlayer, _),
+    CurrentPlayer = player(Color, _),
+    format('Valid moves for ~w: ~w~n', [Color, Moves]),
+    format('~w\'s turn.~n', [CurrentPlayer]),
+    choose_move(GameState, CurrentPlayer, Move),
+    format('Chosen move: ~w~n', [Move]),
+    move(GameState, Move, NewGameState),
+    move_type(Board, Color, Move, Type),
+    Move = (X1, Y1, X2, Y2),
+    format('Applied ~w move: ~w -> ~w~n', [Type, (X1, Y1), (X2, Y2)]),
+    game_loop(NewGameState).
 
 % next_player(+GameState, -NewGameState)
 % -------------------------------------------------------------------------
@@ -386,7 +389,12 @@ fill_row(Row, RowIndex) :-
     maplist(fill_cell(RowIndex), Row, ColIndices).
 
 fill_cell(RowIndex, Cell, ColIndex) :-
-    ( (RowIndex + ColIndex) mod 2 =:= 0 -> Cell = red(1) ; Cell = blue(1) ).
+    fill_cell_color(RowIndex, ColIndex, Cell).
+
+fill_cell_color(RowIndex, ColIndex, red(1)) :-
+    (RowIndex + ColIndex) mod 2 =:= 0.
+fill_cell_color(RowIndex, ColIndex, blue(1)) :-
+    (RowIndex + ColIndex) mod 2 =\= 0.
 
 % display_board(+Board)
 % -------------------------------------------------------------------------
@@ -402,11 +410,9 @@ display_row(Row) :-
     maplist(display_cell, Row),
     nl.
 
-display_cell(Cell) :-
-    ( Cell = red(H) -> format(' r~d ', [H])
-    ; Cell = blue(H) -> format(' b~d ', [H])
-    ; format('  . ', [])
-    ).
+display_cell(red(H)) :- format(' r~d ', [H]).
+display_cell(blue(H)) :- format(' b~d ', [H]).
+display_cell(empty) :- format('  . ', []).
 
 % count_pieces(+Board, +Color, -Count)
 % -------------------------------------------------------------------------
@@ -787,17 +793,18 @@ min_in_list([H|T], Min) :-
 % Test cases
 % Red plays first
 first_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    board(6, Board),
+    % board(6, Board),
     format('Chosen move: (6,5,6,6)~n'), nl,
     format('Applied capturing move: 6,5 -> 6,6~n'),
-    Board = [
+    board(6, [
         [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
         [blue(1), red(1), blue(1), red(1), blue(1), empty],
         [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
         [blue(1), red(1), blue(1), red(1), blue(1), red(1)],
         [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
         [blue(1), red(1), blue(1), red(1), blue(1), red(1)]
-    ],
+    ]),
+    display_board(Board),
     display_game(game(Board, Player1, [Player1, Player2])).
 
 % Intermediate game states
@@ -861,8 +868,13 @@ final_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
         [empty, empty, empty, empty, empty, empty],
         [empty, red(5), empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty]
-    ].
+    ],
+    format('Current player: player(blue,human)~n'),
+    format('---------------------------~n'),
+    format('  GAME OVER!  Winner: red  ~n'),
+    format('---------------------------~n').
 
+% No valid moves for red
 no_moves([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
     Board = [
         [empty, empty, empty, empty, empty, empty],
