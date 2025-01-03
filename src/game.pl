@@ -104,9 +104,9 @@ select_difficulty(Level) :-
 % Purpose:
 %   Prompts user to enter board size and checks if it is a positive integer value.
 enter_board_size(Size) :-
-    write('Enter the board size (e.g., 6 for 6x6):'), nl,
+    write('Enter the board size (an EVEN number, e.g., 6 for 6x6):'), nl,
     read(Size),
-    (integer(Size), Size > 0), !.
+    (integer(Size), Size > 0, Size mod 2 =:= 0), !.
 enter_board_size(Size) :-
     write('Invalid board size. Please try again.'), nl,
     enter_board_size(Size).
@@ -438,40 +438,13 @@ display_top_coordinates(Size) :-
     display_top_coordinates_helper(1, Size),
     nl.
 
-display_top_coordinates_helper(Current, Size) :-
-    Current =< Size,
-    format('  ~w ', [Current]),
-    Next is Current + 1,
-    display_top_coordinates_helper(Next, Size).
-display_top_coordinates_helper(Current, Size) :-
-    Current > Size.
-
 % Display each row with the left coordinates
 display_rows(Board, Size) :-
-    % reverse(Board, ReversedBoard),
     display_rows_helper(Board, Size).
 
-display_rows_helper([], _).
-display_rows_helper([Row|Rows], N) :-
-    format('~w | ', [N]),
-    display_row(Row),
-    nl,
-    N1 is N - 1,
-    display_rows_helper(Rows, N1).
-
-% Display a single row
-display_row(Row) :-
-    maplist(display_cell, Row).
-
-display_cell(red(H)) :- format(' r~d ', [H]).
-display_cell(blue(H)) :- format(' b~d ', [H]).
-display_cell(empty) :- format('  . ', []).
-
-/*display_cell(Cell) :-
-    ( Cell = red(H) -> format('\e[41;30m r~d \e[0m', [H])
-    ; Cell = blue(H) -> format('\e[44;30m b~d \e[0m', [H])
-    ; format('\e[47;30m  . \e[0m', [])
-    ).*/
+display_cell(red(H)) :- format('\e[41;30m r~d \e[0m', [H]).
+display_cell(blue(H)) :- format('\e[44;30m b~d \e[0m', [H]).
+display_cell(empty) :- format('\e[47;30m   . \e[0m', []).
 
 % count_pieces(+Board, +Color, -Count)
 % -------------------------------------------------------------------------
@@ -692,8 +665,6 @@ move_type(Board, Color, (X1, Y1, X2, Y2), capturing) :-
 %   +X, +Y : The coordinates of the position.
 %   -Piece : The piece at the specified position (or empty if none).
 get_piece(Board, X, Y, Piece) :-
-    % nth1(Y, Board, Row),
-    % nth1(X, Row, Piece).
     reverse(Board, ReversedBoard),
     nth1(Y, ReversedBoard, Row),
     nth1(X, Row, Piece).
@@ -709,10 +680,6 @@ get_piece(Board, X, Y, Piece) :-
 %   +Piece    : The piece to place (or empty to clear the position).
 %   -NewBoard : The updated game board.
 set_piece(Board, X, Y, Piece, NewBoard) :-
-    % nth1(Y, Board, Row, RestRows),
-    % nth1(X, Row, _, RestCells),
-    % nth1(X, NewRow, Piece, RestCells),
-    % nth1(Y, NewBoard, NewRow, RestRows).
     reverse(Board, ReversedBoard),
     nth1(Y, ReversedBoard, Row, RestRows),
     nth1(X, Row, _, RestCells),
@@ -855,6 +822,30 @@ min_in_list([Min], Min).
 min_in_list([H|T], Min) :-
     min_in_list(T, TailMin),
     Min is min(H, TailMin).
+
+% display_top_coordinates_helper(+Current, +Size)
+% -------------------------------------------------------------------------
+% Purpose:
+%   Displays the top coordinates of the board.
+display_top_coordinates_helper(Current, Size) :-
+    Current =< Size,
+    format('  ~w ', [Current]),
+    Next is Current + 1,
+    display_top_coordinates_helper(Next, Size).
+display_top_coordinates_helper(Current, Size) :-
+    Current > Size.
+
+% display_rows_helper(+Rows, +N)
+% -------------------------------------------------------------------------
+% Purpose:
+%   Displays the rows of the board with the correspondent Y number.
+display_rows_helper([], _).
+display_rows_helper([Row|Rows], N) :-
+    format('~w | ', [N]),
+    display_row(Row),
+    nl,
+    N1 is N - 1,
+    display_rows_helper(Rows, N1).
 
 
 % Test cases
