@@ -226,33 +226,16 @@ game_over(game(Board, _, _), Winner) :-
 %
 % Details / Strategy:
 %   - Counts the pieces of the player and their opponent.
-%   - The value is calculated as PlayerCount - OpponentCount.
+%   - Calculates the total height of the players pieces.
+%   - Assigns a value based on the difference in pieces and height, prioritizing the fewest number of pieces.
 value(game(Board, _, _), player(Color, _), Value) :-
+    count_pieces(Board, Color, PlayerCount),
+    opponent(Color, Opponent),
+    count_pieces(Board, Opponent, OpponentCount),
     total_height(Board, Color, PlayerHeight),
     opponent(Color, Opponent),
     total_height(Board, Opponent, OpponentHeight),
-    Value is PlayerHeight - OpponentHeight.
-
-% Calculates the total height of the pieces for a given color.
-total_height(Board, Color, Height) :-
-    findall(PieceValue,
-        (member(Row, Board),
-         member(Piece, Row),
-         piece_color(Piece, Color),
-         piece_height(Piece, PieceHeight),
-         piece_value(PieceHeight, PieceValue)),
-        Values),
-    sum_list(Values, Height).
-
-% Calculates the value of a piece based on its height.
-piece_value(Height, Value) :-
-    Value is 2 * Height - 1.
-
-% Sums all the elements in a list.
-sum_list([], 0).
-sum_list([H|T], Sum) :-
-    sum_list(T, Rest),
-    Sum is H + Rest.
+    Value is (OpponentCount - PlayerCount) * 2 + (PlayerHeight - OpponentHeight) * 1.
 
 % choose_move(+GameState, +Player, -Move)
 % -------------------------------------------------------------------------
@@ -467,23 +450,6 @@ display_rows(Board, Size) :-
 display_cell(red(H)) :- format('\e[41;30m r~d \e[0m', [H]).
 display_cell(blue(H)) :- format('\e[44;30m b~d \e[0m', [H]).
 display_cell(empty) :- format('\e[47;30m   . \e[0m', []).
-
-% count_pieces(+Board, +Color, -Count)
-% -------------------------------------------------------------------------
-% Purpose:
-%   Counts the number of pieces of a specific color on the board.
-%
-% Parameters:
-%   +Board : The current game board.
-%   +Color : The color to count (e.g., red, blue).
-%   -Count : The total number of pieces of the given color.
-count_pieces(Board, Color, Count) :-
-    findall(Piece, 
-            (member(Row, Board), 
-             member(Piece, Row), 
-             piece_color(Piece, Color)), 
-            Pieces),
-    length(Pieces, Count).
 
 % opponent(+Color, -Opponent)
 % -------------------------------------------------------------------------
@@ -721,6 +687,53 @@ is_empty(Board, X, Y) :-
     get_piece(Board, X, Y, empty).
 
 length_(Length, List) :- length(List, Length).
+
+% count_pieces(+Board, +Color, -Count)
+% -------------------------------------------------------------------------
+% Purpose:
+%   Counts the number of pieces of a specific color on the board.
+%
+% Parameters:
+%   +Board : The current game board.
+%   +Color : The color to count (e.g., red, blue).
+%   -Count : The total number of pieces of the given color.
+count_pieces(Board, Color, Count) :-
+    findall(Piece, 
+            (member(Row, Board), 
+             member(Piece, Row), 
+             piece_color(Piece, Color)), 
+            Pieces),
+    length(Pieces, Count).
+
+% total_height(+Board, +Color, -Height)
+% -------------------------------------------------------------------------
+% Purpose:
+%   Calculates the total height of the pieces for a given color.
+total_height(Board, Color, Height) :-
+    findall(Value,
+        (member(Row, Board),
+         member(Piece, Row),
+         piece_color(Piece, Color),
+         piece_height(Piece, Height),
+         piece_value(Height, Value)),
+        Values),
+    sum_list(Values, Height).
+
+% piece_value(+Height, -Value)
+% -------------------------------------------------------------------------
+% Purpose:
+%   Calculates the value of a piece based on its height.
+piece_value(Height, Value) :-
+    Value is 2 * Height - 1.
+
+% sum_list(+List, -Sum)
+% -------------------------------------------------------------------------
+% Purpose:
+%   Calculates the sum of all elements in a list.
+sum_list([], 0).
+sum_list([H|T], Sum) :-
+    sum_list(T, Rest),
+    Sum is H + Rest.
 
 % piece_color(+Piece, -Color)
 % -------------------------------------------------------------------------
