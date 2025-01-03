@@ -8,10 +8,11 @@
 %   Main predicate to start the game. Displays the game menu, prompts the
 %   user for a choice, and processes the choice using the process_choice/1 predicate.
 %
-% Details:
+% Details / Strategy:
 %   - The menu provides options to display rules, start different types of games,
 %     or exit.
 %   - Based on user input, the game type and configuration are initialized.
+%   - Implements tail recursion to allow the user to return to the main menu after a game ends.
 play :-
     write('+--------------------------+'), nl,
     write('|          Anaash          |'), nl,
@@ -27,7 +28,10 @@ play :-
     read(Choice),
     process_choice(Choice).
 
-% Process user choice from the main menu
+% process_choice(+Choice)
+% -------------------------------------------------------------------------
+% Purpose:
+%   Processes user choice from the main menu.
 process_choice(0) :-
     display_rules,
     play.
@@ -53,7 +57,10 @@ process_choice(_) :-
     write('Invalid choice. Please try again.'), nl,
     play.
 
-% Display the rules of the game
+% display_rules/0
+% -------------------------------------------------------------------------
+% Purpose:
+%   Displays the rules of the game.
 display_rules :-
     write('------------------------------------------------------------------------------'), nl,
     write('                                 Anaash Rules                                 '), nl,
@@ -72,7 +79,10 @@ display_rules :-
     write('# GOAL OF THE GAME'), nl,
     write('To win you must *capture all enemy checkers*.'), nl, nl.
 
-% Prompt user to select difficulty level
+% select_difficulty(-Level)
+% -------------------------------------------------------------------------
+% Purpose:
+%   Prompts user to select difficulty level and checks if it is 1 or 2.
 select_difficulty(Level) :-
     write('Select difficulty level:'), nl,
     write('1. Random'), nl,
@@ -83,7 +93,10 @@ select_difficulty(Level) :-
     write('Invalid choice. Please try again.'), nl,
     select_difficulty(Level).
 
-% Prompt user to enter board size
+% enter_board_size(-Size)
+% -------------------------------------------------------------------------
+% Purpose:
+%   Prompts user to enter board size and checks if it is a positive integer value.
 enter_board_size(Size) :-
     write('Enter the board size (e.g., 6 for 6x6):'), nl,
     read(Size),
@@ -107,7 +120,7 @@ start_game(Player1, Player2, Size) :-
 %   -GameState  : The resulting game state represented as 
 %                 game(Board, CurrentPlayer, [Player1, Player2]).
 %
-% Details:
+% Details / Strategy:
 %   - Generates an empty board of the specified size.
 %   - Sets Player1 as the starting player.
 initial_state([Player1, Player2], Size, game(Board, Player1, [Player1, Player2])) :- 
@@ -122,7 +135,7 @@ initial_state([Player1, Player2], Size, game(Board, Player1, [Player1, Player2])
 %   +GameState : The current game state represented as 
 %                game(Board, CurrentPlayer, _).
 %
-% Details:
+% Details / Strategy:
 %   - Displays the board using display_board/1.
 %   - Indicates the current player whose turn it is to move.
 display_game(game(Board, CurrentPlayer, _)) :-
@@ -140,7 +153,7 @@ display_game(game(Board, CurrentPlayer, _)) :-
 %   +Move         : The move to be executed, typically a tuple (X1, Y1, X2, Y2).
 %   -NewGameState : The updated game state after applying the move.
 %
-% Details:
+% Details / Strategy:
 %   - Validates the move using valid_move/3.
 %   - Updates the board by applying the move with apply_move/4.
 %   - Switches the turn to the next player using next_player/3.
@@ -159,7 +172,7 @@ move(game(Board, CurrentPlayer, Players), Move, game(NewBoard, NextPlayer, Playe
 %   +GameState : The current game state.
 %   -Moves     : A list of all valid moves (as unique tuples) for the active player.
 %
-% Details:
+% Details / Strategy:
 %   - Iterates through all positions on the board and determines possible moves.
 %   - Ensures moves are within bounds and adhere to game rules.
 %   - Removes duplicate moves using sort/2 to produce unique moves.
@@ -184,13 +197,15 @@ valid_moves(game(Board, player(Color, _), _), ListOfMoves) :-
 %   +GameState : The current game state.
 %   -Winner    : The winner of the game (red or blue).
 %
-% Details:
+% Details / Strategy:
 %   - The game is over if one players pieces are completely captured.
 %   - Winner is set to the color of the player with remaining pieces.
 game_over(game(Board, _, _), Winner) :-
     count_pieces(Board, red, 0), !, Winner = blue.
 game_over(game(Board, _, _), Winner) :-
     count_pieces(Board, blue, 0), !, Winner = red.
+
+% value(+GameState, +Player, -Value)
 % -------------------------------------------------------------------------
 % Purpose:
 %   Evaluates the current game state for a specified player, providing a
@@ -201,7 +216,7 @@ game_over(game(Board, _, _), Winner) :-
 %   +Player    : The player (with their color) being evaluated.
 %   -Value     : The evaluation score (positive indicates advantage, negative disadvantage).
 %
-% Details:
+% Details / Strategy:
 %   - Counts the pieces of the player and their opponent.
 %   - The value is calculated as PlayerCount - OpponentCount.
 value(game(Board, _, _), player(Color, _), Value) :-
@@ -221,7 +236,7 @@ value(game(Board, _, _), player(Color, _), Value) :-
 %   +Player    : The current player (human or computer).
 %   -Move      : The selected move.
 %
-% Details:
+% Details / Strategy:
 %   - Human players are prompted for input via read_move/2.
 %   - Computer players choose a move based on the difficulty level:
 %       Level 1: Random move (choose_random_move/2).
@@ -246,7 +261,7 @@ choose_move_by_level(2, GameState, Move) :-
 %   +GameState : The current game state.
 %   -Move      : A randomly selected valid move.
 %
-% Details:
+% Details / Strategy:
 %   - Retrieves all valid moves using valid_moves/2.
 %   - Randomly picks one move using random_member/2.
 choose_random_move(GameState, Move) :-
@@ -262,7 +277,7 @@ choose_random_move(GameState, Move) :-
 %   +GameState : The current game state.
 %   -Move      : The move with the highest evaluation score.
 %
-% Details:
+% Details / Strategy:
 %   - Evaluates all valid moves and assigns scores to each.
 %   - Selects the move with the highest score using keysort/2 and last/2.
 choose_greedy_move(GameState, Move) :-
@@ -784,6 +799,14 @@ nearest_stack(Board, (X, Y), (XN, YN)) :-
     nth1(Index, Distances, MinDistance),
     nth1(Index, Stacks, (XN, YN)).
 
+% min_in_list(+List, -Min)
+% -------------------------------------------------------------------------
+% Purpose:
+%   Finds the minimum value in a list.
+%
+% Parameters:
+%   +List : The list of values.
+%   -Min  : The minimum value in the list.
 min_in_list([Min], Min).
 min_in_list([H|T], Min) :-
     min_in_list(T, TailMin),
