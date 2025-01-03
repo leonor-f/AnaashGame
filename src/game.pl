@@ -449,7 +449,7 @@ display_rows(Board, Size) :-
 
 display_cell(red(H)) :- format('\e[41;30m r~d \e[0m', [H]).
 display_cell(blue(H)) :- format('\e[44;30m b~d \e[0m', [H]).
-display_cell(empty) :- format('\e[47;30m   . \e[0m', []).
+display_cell(empty) :- format('\e[47;30m  . \e[0m', []).
 
 % opponent(+Color, -Opponent)
 % -------------------------------------------------------------------------
@@ -882,6 +882,12 @@ display_rows_helper([Row|Rows], N) :-
     N1 is N - 1,
     display_rows_helper(Rows, N1).
 
+% display_row(+Rows)
+% -------------------------------------------------------------------------
+% Purpose:
+% Display a single row
+display_row(Row) :-
+    maplist(display_cell, Row).
 
 % Test cases
 % Red plays first
