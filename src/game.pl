@@ -891,25 +891,27 @@ display_row(Row) :-
 
 % Test cases
 % Red plays first
-first_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    % board(6, Board),
-    format('~nChosen move: (6,5,6,6)~n~n'),
-    format('Applied capturing move: 6,5 -> 6,6~n~n'),
-    board(6, [
+first_move :-
+    Player1 = player(red, human),
+    Player2 = player(blue, human),
+    write('Chosen move: (6,5,6,6)'), nl,
+    write('Applied capturing move: 6,5 -> 6,6'), nl,
+    Board = [
         [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
         [blue(1), red(1), blue(1), red(1), blue(1), empty],
         [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
         [blue(1), red(1), blue(1), red(1), blue(1), red(1)],
         [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
         [blue(1), red(1), blue(1), red(1), blue(1), red(1)]
-    ]),
-    display_board(Board),
-    display_game(game(Board, Player1, [Player1, Player2])).
+    ],
+    display_board(Board).
 
 % Intermediate game states
-stacking_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    format('Chosen move: (4,5,5,5)~n~n'),
-    format('Applied stacking move: 4,5 -> 5,5~n'),
+stacking_move :-
+    Player1 = player(red, human),
+    Player2 = player(blue, human),
+    write('Chosen move: (4,5,5,5)'), nl,
+    write('Applied stacking move: 4,5 -> 5,5'), nl,
     Board = [
         [red(1), blue(1), red(1), blue(1), empty, empty],
         [blue(1), red(1), blue(1), empty, red(3), empty],
@@ -917,11 +919,14 @@ stacking_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
         [blue(1), red(1), blue(1), red(1), empty, blue(1)],
         [red(1), blue(1), red(1), blue(1), red(1), empty],
         [blue(1), red(1), blue(1), red(1), blue(1), blue(1)]
-    ].
+    ],
+    display_board(Board).
 
-positional_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    format('Chosen move: (6,1,6,2)~n~n'),
-    format('Applied positional move: 6,1 -> 6,2~n'),
+positional_move :-
+    Player1 = player(red, human),
+    Player2 = player(blue, human),
+    write('Chosen move: (6,1,6,2)'), nl,
+    write('Applied positional move: 6,1 -> 6,2'), nl,
     Board = [
         [red(1), empty, red(1), blue(1), empty, empty],
         [empty, red(1), blue(1), empty, empty, empty],
@@ -929,11 +934,15 @@ positional_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
         [blue(1), empty, blue(1), red(1), empty, empty],
         [red(1), blue(1), red(1), blue(1), blue(1), blue(1)],
         [empty, red(1), blue(1), red(1), empty, empty]
-    ].
+    ],
+    display_board(Board).
 
-capturing_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    format('Chosen move: (2,2,2,1)~n~n'),
-    format('Applied capturing move: 2,2 -> 2,1~n'),
+
+capturing_move :-
+    Player1 = player(red, human),
+    Player2 = player(blue, human),
+    write('Chosen move: (2,2,2,1)'), nl,
+    write('Applied capturing move: 2,2 -> 2,1'), nl,
     Board = [
         [empty, empty, empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty],
@@ -941,12 +950,15 @@ capturing_move([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
         [empty, empty, empty, empty, empty, empty],
         [blue(2), empty, empty, empty, empty, empty],
         [empty, red(5), empty, empty, empty, empty]
-    ].
+    ],
+    display_board(Board).
 
 % Near-final game state
-near_final_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    format('Chosen move: (1,2,2,2)~n~n'),
-    format('Applied positional move: 1,2 -> 2,2~n'),
+near_final_state :-
+    Player1 = player(red, human),
+    Player2 = player(blue, human),
+    write('Chosen move: (1,2,2,2)'), nl,
+    write('Applied positional move: 1,2 -> 2,2'), nl,
     Board = [
         [empty, empty, empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty],
@@ -954,12 +966,15 @@ near_final_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :
         [empty, empty, empty, empty, empty, empty],
         [empty, blue(2), empty, empty, empty, empty],
         [empty, red(5), empty, empty, empty, empty]
-    ].
+    ],
+    display_board(Board).
 
 % Final game state
-final_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
-    format('Chosen move: (2,1,2,2)~n~n'),
-    format('Applied capturing move: 2,1 -> 2,2~n'),
+final_state :-
+    Player1 = player(red, human),
+    Player2 = player(blue, human),
+    write('Chosen move: (2,1,2,2)'), nl,
+    write('Applied capturing move: 2,1 -> 2,2'), nl,
     Board = [
         [empty, empty, empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty],
@@ -968,13 +983,16 @@ final_state([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
         [empty, red(5), empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty]
     ],
-    format('Current player: player(blue,human)~n'),
-    format('---------------------------~n'),
-    format('  GAME OVER!  Winner: red  ~n'),
-    format('---------------------------~n').
+    display_board(Board),
+    write('Current player: player(blue,human)'), nl,
+    write('---------------------------'), nl,
+    write('  GAME OVER!  Winner: red  '), nl,
+    write('---------------------------'). 
 
 % No valid moves for red
-no_moves([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
+no_moves :-
+    Player1 = player(red, human),
+    Player2 = player(blue, human),
     Board = [
         [empty, empty, empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty],
@@ -983,7 +1001,8 @@ no_moves([Player1, Player2], game(Board, Player1, [Player1, Player2])) :-
         [empty, blue(3), empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty]
     ],
-    format('Current player: player(red,human)~n'),
-    format('No valid moves for player(red,human). Skipping turn.~n'),
-    format('Current player: player(blue,human)~n'),
-    format('Valid moves for blue: [(3, 2, 2, 2), (3, 2, 4, 2), (3, 2, 3, 1), (3, 2, 3, 3), (4, 1, 3, 1), (4, 1, 5, 1), (4, 1, 4, 2), (4, 3, 3, 3), (4, 3, 5, 3), (4, 3, 4, 2), (4, 3, 4, 4), (5, 2, 4, 2), (5, 2, 5, 1), (5, 2, 5, 3)]').
+    display_board(Board),
+    write('Current player: player(red,human)'), nl,
+    write('No valid moves for player(red,human). Skipping turn.'), nl,
+    write('Current player: player(blue,human)'), nl,
+    write('Valid moves for blue: [(3, 2, 2, 2), (3, 2, 4, 2), (3, 2, 3, 1), (3, 2, 3, 3), (4, 1, 3, 1), (4, 1, 5, 1), (4, 1, 4, 2), (4, 3, 3, 3), (4, 3, 5, 3), (4, 3, 4, 2), (4, 3, 4, 4), (5, 2, 4, 2), (5, 2, 5, 1), (5, 2, 5, 3)]').
