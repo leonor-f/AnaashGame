@@ -2,11 +2,6 @@
 :- use_module(library(between)).
 :- use_module(library(random)).
 
-% Define the colors using ANSI escape codes
-color(red, '\e[31m\e[0m').    % Red
-color(blue, '\e[34m\e[0m').   % Blue
-color(empty, '\e[37m\e[0m').  % Grey
-
 % play/0
 % -------------------------------------------------------------------------
 % Purpose:
@@ -111,7 +106,10 @@ enter_board_size(Size) :-
     write('Invalid board size. Please try again.'), nl,
     enter_board_size(Size).
 
-% Start the game with the given players
+% start_game(+Player1, +Player2, +Size)
+% -------------------------------------------------------------------------
+% Purpose:
+%   Start the game with the given players
 start_game(Player1, Player2, Size) :-
     initial_state([Player1, Player2], Size, GameState),
     game_loop(GameState).
@@ -147,7 +145,7 @@ initial_state([Player1, Player2], Size, game(Board, Player1, [Player1, Player2])
 display_game(game(Board, CurrentPlayer, _)) :-
     display_board(Board),
     CurrentPlayer = player(Color, _),
-    format('~n~w player\'s turn!~n', [Color]), nl.
+    format('~n~w player\'s turn!~n~n', [Color]).
 
 % move(+GameState, +Move, -NewGameState)
 % -------------------------------------------------------------------------
@@ -227,7 +225,9 @@ game_over(game(Board, _, _), Winner) :-
 % Details / Strategy:
 %   - Counts the pieces of the player and their opponent.
 %   - Calculates the total height of the players pieces.
-%   - Assigns a value based on the difference in pieces and height, prioritizing the fewest number of pieces.
+%   - Assigns a value based on the difference in pieces and height,
+%     prioritizing the fewest number of pieces of the opponent,
+%     followed by the lowest total height of the oponnents pieces.
 value(game(Board, _, _), player(Color, _), Value) :-
     count_pieces(Board, Color, PlayerCount),
     opponent(Color, Opponent),
@@ -235,7 +235,7 @@ value(game(Board, _, _), player(Color, _), Value) :-
     total_height(Board, Color, PlayerHeight),
     opponent(Color, Opponent),
     total_height(Board, Opponent, OpponentHeight),
-    Value is (OpponentCount - PlayerCount) * 2 + (PlayerHeight - OpponentHeight) * 1.
+    Value is (PlayerCount - OpponentCount) * 2 + (PlayerHeight - OpponentHeight) * 1.
 
 % choose_move(+GameState, +Player, -Move)
 % -------------------------------------------------------------------------
@@ -350,7 +350,7 @@ game_loop(GameState) :-
         write('---------------------------'), nl,
         play
     ; display_game(GameState),
-      % CurrentPlayer = player(Color, _),
+      %%% CurrentPlayer = player(Color, _),
       valid_moves(GameState, Moves),
       handle_moves(GameState, Moves, CurrentPlayer)
     ).
@@ -449,7 +449,7 @@ display_rows(Board, Size) :-
 
 display_cell(red(H)) :- format('\e[41;30m r~d \e[0m', [H]).
 display_cell(blue(H)) :- format('\e[44;30m b~d \e[0m', [H]).
-display_cell(empty) :- format('\e[47;30m  . \e[0m', []).
+display_cell(empty) :- format('\e[47;30m   . \e[0m', []).
 
 % opponent(+Color, -Opponent)
 % -------------------------------------------------------------------------
@@ -840,7 +840,7 @@ closer_to_nearest_stack(Board, (X1, Y1), (X2, Y2)) :-
 nearest_stack(Board, (X, Y), (XN, YN)) :-
     findall((X2, Y2), (get_piece(Board, X2, Y2, Piece), Piece \= empty, (X2, Y2) \= (X, Y)), Stacks),
     maplist(manhattan_distance((X, Y)), Stacks, Distances),
-    % min_list(Distances, MinDistance),
+    %%% min_list(Distances, MinDistance),
     min_in_list(Distances, MinDistance),
     nth1(Index, Distances, MinDistance),
     nth1(Index, Stacks, (XN, YN)).
@@ -889,13 +889,14 @@ display_rows_helper([Row|Rows], N) :-
 display_row(Row) :-
     maplist(display_cell, Row).
 
+
 % Test cases
 % Red plays first
-first_move :-
+first_player :-
+    write('Display:'), nl,
     Player1 = player(red, human),
     Player2 = player(blue, human),
-    write('Chosen move: (6,5,6,6)'), nl,
-    write('Applied capturing move: 6,5 -> 6,6'), nl,
+    write('red player\'s turn!'), nl,
     Board = [
         [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
         [blue(1), red(1), blue(1), red(1), blue(1), empty],
@@ -904,14 +905,22 @@ first_move :-
         [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
         [blue(1), red(1), blue(1), red(1), blue(1), red(1)]
     ],
-    display_board(Board).
+    display_board(Board), nl,
+    write('Game State:'), nl.
+
+% display game state and then display
+first_state([Player1, Player2], Size, game(Board, Player1, [Player1, Player2])) :- 
+    board(Size, Board), nl,
+    first_player.
 
 % Intermediate game states
 stacking_move :-
+    write('Display:'), nl,
     Player1 = player(red, human),
     Player2 = player(blue, human),
-    write('Chosen move: (4,5,5,5)'), nl,
-    write('Applied stacking move: 4,5 -> 5,5'), nl,
+    %%% write('Chosen move: (4,5,5,5)'), nl,
+    %%% write('Applied stacking move: 4,5 -> 5,5'), nl,
+    write('blue player\'s turn!'), nl,
     Board = [
         [red(1), blue(1), red(1), blue(1), empty, empty],
         [blue(1), red(1), blue(1), empty, red(3), empty],
@@ -920,7 +929,12 @@ stacking_move :-
         [red(1), blue(1), red(1), blue(1), red(1), empty],
         [blue(1), red(1), blue(1), red(1), blue(1), blue(1)]
     ],
-    display_board(Board).
+    display_board(Board), nl,
+    write('Game State:'), nl.
+
+% display game state and then display
+second_state([Player1, Player2], Size, game(Board, Player2, [Player1, Player2])) :- 
+    stacking_move.
 
 positional_move :-
     Player1 = player(red, human),
@@ -936,7 +950,6 @@ positional_move :-
         [empty, red(1), blue(1), red(1), empty, empty]
     ],
     display_board(Board).
-
 
 capturing_move :-
     Player1 = player(red, human),
