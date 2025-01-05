@@ -188,7 +188,6 @@ valid_moves(game(Board, player(Color, _), _), ListOfMoves) :-
          get_piece(Board, X1, Y1, Piece),
          piece_color(Piece, Color),
          between(1, Size, X2), between(1, Size, Y2), 
-         between(1, Size, X2), between(1, Size, Y2), 
          one_step_move((X1, Y1), (X2, Y2)),
          valid_move(Board, player(Color, _), (X1, Y1, X2, Y2))),
         Moves),
@@ -449,7 +448,7 @@ display_rows(Board, Size) :-
 
 display_cell(red(H)) :- format('\e[41;30m r~d \e[0m', [H]).
 display_cell(blue(H)) :- format('\e[44;30m b~d \e[0m', [H]).
-display_cell(empty) :- format('\e[47;30m   . \e[0m', []).
+display_cell(empty) :- format('\e[47;30m  . \e[0m', []).
 
 % opponent(+Color, -Opponent)
 % -------------------------------------------------------------------------
@@ -891,131 +890,191 @@ display_row(Row) :-
 
 
 % Test cases
-% Red plays first
-first_player :-
-    write('Display:'), nl,
+
+% Initial state
+% red plays first
+first_state([Player1, Player2], Size, GameState) :-
     Player1 = player(red, human),
     Player2 = player(blue, human),
-    write('red player\'s turn!'), nl,
+    Size = 6,
     Board = [
         [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
+        [blue(1), red(1), blue(1), red(1), blue(1), red(1)],
+        [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
+        [blue(1), red(1), blue(1), red(1), blue(1), red(1)],
+        [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
+        [blue(1), red(1), blue(1), red(1), blue(1), red(1)]
+    ], nl,
+    GameState = game(Board, Player1, [Player1, Player2]),
+    display_game(GameState),
+    write('Valid moves for red: [(1,2,1,1),(1,2,1,3),(1,2,2,2),(1,4,1,3),(1,4,1,5),(1,4,2,4),(1,6,1,5),(1,6,2,6),(2,1,1,1),(2,1,2,2),(2,1,3,1),(2,3,1,3),(2,3,2,2),(2,3,2,4),(2,3,3,3),(2,5,1,5),(2,5,2,4),(2,5,2,6),(2,5,3,5),(3,2,2,2),(3,2,3,1),(3,2,3,3),(3,2,4,2),(3,4,2,4),(3,4,3,3),(3,4,3,5),(3,4,4,4),(3,6,2,6),(3,6,3,5),(3,6,4,6),(4,1,3,1),(4,1,4,2),(4,1,5,1),(4,3,3,3),(4,3,4,2),(4,3,4,4),(4,3,5,3),(4,5,3,5),(4,5,4,4),(4,5,4,6),(4,5,5,5),(5,2,4,2),(5,2,5,1),(5,2,5,3),(5,2,6,2),(5,4,4,4),(5,4,5,3),(5,4,5,5),(5,4,6,4),(5,6,4,6),(5,6,5,5),(5,6,6,6),(6,1,5,1),(6,1,6,2),(6,3,5,3),(6,3,6,2),(6,3,6,4),(6,5,5,5),(6,5,6,4),(6,5,6,6)]'), nl, nl.
+
+% Intermediate game states
+% capturing move
+intermediate_state_1([Player1, Player2], Size, GameState) :-
+    Player1 = player(red, human),
+    Player2 = player(blue, human),
+    Size = 6,
+    Board = [
+        [red(1), blue(1), red(1), blue(1), red(1), red(1)],
         [blue(1), red(1), blue(1), red(1), blue(1), empty],
         [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
         [blue(1), red(1), blue(1), red(1), blue(1), red(1)],
         [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
         [blue(1), red(1), blue(1), red(1), blue(1), red(1)]
-    ],
-    display_board(Board), nl,
-    write('Game State:'), nl.
+    ], nl,
+    write('Chosen move: 6,5,6,6'), nl,
+    write('Applied capturing move: 6,5 -> 6,6'), nl, nl,
+    GameState = game(Board, Player2, [Player1, Player2]),
+    display_game(GameState),
+    write('Valid moves for blue: [(1,3,1,4),(1,3,2,3),(1,5,1,4),(1,5,1,6),(1,5,2,5),(2,2,2,1),(2,2,2,3),(2,2,3,2),(2,4,1,4),(2,4,2,3),(2,4,2,5),(2,4,3,4),(2,6,1,6),(2,6,2,5),(2,6,3,6),(3,1,2,1),(3,1,3,2),(3,1,4,1),(3,3,2,3),(3,3,3,2),(3,3,3,4),(3,3,4,3),(3,5,2,5),(3,5,3,4),(3,5,3,6),(3,5,4,5),(4,2,3,2),(4,2,4,1),(4,2,4,3),(4,2,5,2),(4,4,3,4),(4,4,4,3),(4,4,4,5),(4,4,5,4),(4,6,3,6),(4,6,4,5),(4,6,5,6),(5,1,4,1),(5,1,5,2),(5,1,6,1),(5,3,4,3),(5,3,5,2),(5,3,5,4),(5,3,6,3),(5,5,4,5),(5,5,5,4),(5,5,5,6),(5,5,6,5),(6,2,5,2),(6,2,6,1),(6,2,6,3),(6,4,5,4),(6,4,6,3),(6,4,6,5),(6,6,5,6),(6,6,6,5)]'), nl, nl.
 
-% display game state and then display
-first_state([Player1, Player2], Size, game(Board, Player1, [Player1, Player2])) :- 
-    board(Size, Board), nl,
-    first_player.
-
-% Intermediate game states
-stacking_move :-
-    write('Display:'), nl,
+% capturing move
+intermediate_state_2([Player1, Player2], Size, GameState) :-
     Player1 = player(red, human),
     Player2 = player(blue, human),
-    %%% write('Chosen move: (4,5,5,5)'), nl,
-    %%% write('Applied stacking move: 4,5 -> 5,5'), nl,
-    write('blue player\'s turn!'), nl,
+    Size = 6,
     Board = [
-        [red(1), blue(1), red(1), blue(1), empty, empty],
-        [blue(1), red(1), blue(1), empty, red(3), empty],
-        [red(1), blue(1), red(1), blue(1), blue(1), empty],
-        [blue(1), red(1), blue(1), red(1), empty, blue(1)],
+        [red(1), blue(1), red(1), blue(1), red(1), red(1)],
+        [blue(1), red(1), blue(1), red(1), blue(1), empty],
         [red(1), blue(1), red(1), blue(1), red(1), empty],
-        [blue(1), red(1), blue(1), red(1), blue(1), blue(1)]
-    ],
-    display_board(Board), nl,
-    write('Game State:'), nl.
+        [blue(1), red(1), blue(1), red(1), blue(1), blue(1)],
+        [red(1), blue(1), red(1), blue(1), red(1), blue(1)],
+        [blue(1), red(1), blue(1), red(1), blue(1), red(1)]
+    ], nl,
+    write('Chosen move: 6,4,6,3'), nl,
+    write('Applied capturing move: 6,4 -> 6,3'), nl, nl,
+    GameState = game(Board, Player1, [Player1, Player2]),
+    display_game(GameState),
+    write('Valid moves for red: [(1,2,1,1),(1,2,1,3),(1,2,2,2),(1,4,1,3),(1,4,1,5),(1,4,2,4),(1,6,1,5),(1,6,2,6),(2,1,1,1),(2,1,2,2),(2,1,3,1),(2,3,1,3),(2,3,2,2),(2,3,2,4),(2,3,3,3),(2,5,1,5),(2,5,2,4),(2,5,2,6),(2,5,3,5),(3,2,2,2),(3,2,3,1),(3,2,3,3),(3,2,4,2),(3,4,2,4),(3,4,3,3),(3,4,3,5),(3,4,4,4),(3,6,2,6),(3,6,3,5),(3,6,4,6),(4,1,3,1),(4,1,4,2),(4,1,5,1),(4,3,3,3),(4,3,4,2),(4,3,4,4),(4,3,5,3),(4,5,3,5),(4,5,4,4),(4,5,4,6),(4,5,5,5),(5,2,4,2),(5,2,5,1),(5,2,5,3),(5,2,6,2),(5,4,4,4),(5,4,5,3),(5,4,5,5),(5,6,4,6),(5,6,5,5),(5,6,6,6),(6,1,5,1),(6,1,6,2),(6,6,5,6)]'), nl, nl.
 
-% display game state and then display
-second_state([Player1, Player2], Size, game(Board, Player2, [Player1, Player2])) :- 
-    stacking_move.
-
-positional_move :-
+% capturing move
+intermediate_state_3([Player1, Player2], Size, GameState) :-
     Player1 = player(red, human),
     Player2 = player(blue, human),
-    write('Chosen move: (6,1,6,2)'), nl,
-    write('Applied positional move: 6,1 -> 6,2'), nl,
+    Size = 6,
     Board = [
-        [red(1), empty, red(1), blue(1), empty, empty],
-        [empty, red(1), blue(1), empty, empty, empty],
-        [red(1), blue(1), empty, blue(1), empty, red(3)],
-        [blue(1), empty, blue(1), red(1), empty, empty],
-        [red(1), blue(1), red(1), blue(1), blue(1), blue(1)],
-        [empty, red(1), blue(1), red(1), empty, empty]
-    ],
-    display_board(Board).
+        [red(1), blue(1), red(1), blue(1), red(1), red(1)],
+        [blue(1), red(1), blue(1), red(1), blue(1), empty],
+        [red(1), blue(1), red(1), blue(1), red(1), empty],
+        [blue(1), red(1), blue(1), red(1), blue(1), blue(1)],
+        [red(1), blue(1), red(1), blue(1), red(1), red(1)],
+        [blue(1), red(1), blue(1), red(1), blue(1), empty]
+    ], nl,
+    write('Chosen move: 6,1,6,2'), nl,
+    write('Applied capturing move: 6,1 -> 6,2'), nl, nl,
+    GameState = game(Board, Player2, [Player1, Player2]),
+    display_game(GameState),
+    write('Valid moves for blue: [(1,1,1,2),(1,1,2,1),(1,3,1,2),(1,3,1,4),(1,3,2,3),(1,5,1,4),(1,5,1,6),(1,5,2,5),(2,2,1,2),(2,2,2,1),(2,2,2,3),(2,2,3,2),(2,4,1,4),(2,4,2,3),(2,4,2,5),(2,4,3,4),(2,6,1,6),(2,6,2,5),(2,6,3,6),(3,1,2,1),(3,1,3,2),(3,1,4,1),(3,3,2,3),(3,3,3,2),(3,3,3,4),(3,3,4,3),(3,5,2,5),(3,5,3,4),(3,5,3,6),(3,5,4,5),(4,2,3,2),(4,2,4,1),(4,2,4,3),(4,2,5,2),(4,4,3,4),(4,4,4,3),(4,4,4,5),(4,4,5,4),(4,6,3,6),(4,6,4,5),(4,6,5,6),(5,1,4,1),(5,1,5,2),(5,3,4,3),(5,3,5,2),(5,3,5,4),(5,3,6,3),(5,5,4,5),(5,5,5,4),(5,5,5,6),(6,3,5,3),(6,3,6,2)]'), nl, nl.
 
-capturing_move :-
+% stacking move
+intermediate_state_4([Player1, Player2], Size, GameState) :-
     Player1 = player(red, human),
     Player2 = player(blue, human),
-    write('Chosen move: (2,2,2,1)'), nl,
-    write('Applied capturing move: 2,2 -> 2,1'), nl,
+    Size = 6,
+    Board = [
+        [red(1), blue(1), red(1), blue(1), red(1), red(1)],
+        [blue(1), red(1), blue(1), red(1), blue(1), empty],
+        [red(1), blue(1), red(1), blue(1), red(1), empty],
+        [blue(1), red(1), blue(1), red(1), blue(2), empty],
+        [red(1), blue(1), red(1), blue(1), red(1), red(1)],
+        [blue(1), red(1), blue(1), red(1), blue(1), empty]
+    ], nl,
+    write('Chosen move: 6,3,5,3'), nl,
+    write('Applied stacking move: 6,3 -> 5,3'), nl, nl,
+    GameState = game(Board, Player1, [Player1, Player2]),
+    display_game(GameState),
+    write('Valid moves for red: [(1,2,1,1),(1,2,1,3),(1,2,2,2),(1,4,1,3),(1,4,1,5),(1,4,2,4),(1,6,1,5),(1,6,2,6),(2,1,1,1),(2,1,2,2),(2,1,3,1),(2,3,1,3),(2,3,2,2),(2,3,2,4),(2,3,3,3),(2,5,1,5),(2,5,2,4),(2,5,2,6),(2,5,3,5),(3,2,2,2),(3,2,3,1),(3,2,3,3),(3,2,4,2),(3,4,2,4),(3,4,3,3),(3,4,3,5),(3,4,4,4),(3,6,2,6),(3,6,3,5),(3,6,4,6),(4,1,3,1),(4,1,4,2),(4,1,5,1),(4,3,3,3),(4,3,4,2),(4,3,4,4),(4,5,3,5),(4,5,4,4),(4,5,4,6),(4,5,5,5),(5,2,4,2),(5,2,5,1),(5,2,6,2),(5,4,4,4),(5,4,5,5),(5,6,4,6),(5,6,5,5),(5,6,6,6),(6,2,5,2),(6,6,5,6)]'), nl, nl.
+
+% positional move
+intermediate_state_5([Player1, Player2], Size, GameState) :-
+    Player1 = player(red, human),
+    Player2 = player(blue, human),
+    Size = 6,
     Board = [
         [empty, empty, empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty],
+        [empty, empty, blue(3), empty, red(4), empty],
         [empty, empty, empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty],
-        [blue(2), empty, empty, empty, empty, empty],
-        [empty, red(5), empty, empty, empty, empty]
-    ],
-    display_board(Board).
+        [empty, empty, empty, empty, empty, empty]
+    ], nl,
+    write('Chosen move: 5,2,5,3'), nl,
+    write('Applied positional move: 5,2 -> 5,3'), nl, nl,
+    GameState = game(Board, Player2, [Player1, Player2]),
+    display_game(GameState),
+    write('Valid moves for blue: [(3,3,4,3)]'), nl, nl.
 
 % Near-final game state
-near_final_state :-
+% positional move
+near_final_state([Player1, Player2], Size, GameState) :-
     Player1 = player(red, human),
     Player2 = player(blue, human),
-    write('Chosen move: (1,2,2,2)'), nl,
-    write('Applied positional move: 1,2 -> 2,2'), nl,
+    Size = 6,
     Board = [
         [empty, empty, empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty],
+        [empty, empty, empty, blue(3), red(4), empty],
         [empty, empty, empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty],
-        [empty, blue(2), empty, empty, empty, empty],
-        [empty, red(5), empty, empty, empty, empty]
-    ],
-    display_board(Board).
+        [empty, empty, empty, empty, empty, empty]
+    ], nl,
+    write('Chosen move: 3,3,4,3'), nl,
+    write('Applied positional move: 3,3 -> 4,3'), nl, nl,
+    GameState = game(Board, Player1, [Player1, Player2]),
+    display_game(GameState),
+    write('Valid moves for red: [(5,3,4,3)]'), nl, nl.
 
 % Final game state
-final_state :-
+% capturing move
+final_state([Player1, Player2], Size, GameState) :-
     Player1 = player(red, human),
     Player2 = player(blue, human),
-    write('Chosen move: (2,1,2,2)'), nl,
-    write('Applied capturing move: 2,1 -> 2,2'), nl,
+    Size = 6,
     Board = [
         [empty, empty, empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty],
+        [empty, empty, empty, red(4), empty, empty],
         [empty, empty, empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty],
-        [empty, red(5), empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty]
-    ],
-    display_board(Board),
-    write('Current player: player(blue,human)'), nl,
+    ], nl,
+    write('Chosen move: 5,3,4,3'), nl,
+    write('Applied capturing move: 5,3 -> 4,3'), nl,
+    GameState = game(Board, _, _), nl,
+    display_board(Board), nl,
     write('---------------------------'), nl,
     write('  GAME OVER!  Winner: red  '), nl,
-    write('---------------------------'). 
+    write('---------------------------'), nl, nl.
 
-% No valid moves for red
-no_moves :-
-    Player1 = player(red, human),
-    Player2 = player(blue, human),
+over(GameState, Winner) :-
     Board = [
         [empty, empty, empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty],
-        [empty, blue(5), empty, empty, empty, empty],
-        [blue(3), red(1), blue(2), empty, empty, empty],
-        [empty, blue(3), empty, empty, empty, empty],
+        [empty, empty, empty, red(4), empty, empty],
+        [empty, empty, empty, empty, empty, empty],
+        [empty, empty, empty, empty, empty, empty],
         [empty, empty, empty, empty, empty, empty]
     ],
-    display_board(Board),
-    write('Current player: player(red,human)'), nl,
-    write('No valid moves for player(red,human). Skipping turn.'), nl,
-    write('Current player: player(blue,human)'), nl,
-    write('Valid moves for blue: [(3, 2, 2, 2), (3, 2, 4, 2), (3, 2, 3, 1), (3, 2, 3, 3), (4, 1, 3, 1), (4, 1, 5, 1), (4, 1, 4, 2), (4, 3, 3, 3), (4, 3, 5, 3), (4, 3, 4, 2), (4, 3, 4, 4), (5, 2, 4, 2), (5, 2, 5, 1), (5, 2, 5, 3)]').
+    GameState = game(Board, _, _), nl,
+    game_over(GameState, Winner).
+
+% No valid moves for red
+no_moves([Player1, Player2], Size, GameState) :-
+    Player1 = player(red, human),
+    Player2 = player(blue, human),
+    Size = 6,
+    Board = [
+        [empty, empty, empty, empty, empty, empty],
+        [empty, empty, empty, empty, empty, empty],
+        [empty, empty, blue(2), empty, empty, empty],
+        [empty, blue(2), red(1), blue(2), empty, empty],
+        [empty, empty, blue(3), empty, empty, empty],
+        [empty, empty, empty, empty, empty, empty]
+    ], nl,
+    GameState1 = game(Board, Player1, [Player1, Player2]),
+    display_game(GameState1),
+    write('No valid moves for red. Skipping turn.'), nl, nl,
+    GameState = game(Board, Player2, [Player1, Player2]),
+    display_game(GameState),
+    write('Valid moves for blue: [...]'), nl, nl.
