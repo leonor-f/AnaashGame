@@ -35,5 +35,5 @@ The **Random AI (Level 1)** chooses a move by selecting randomly from the list o
 
 The **Greedy AI (Level 2)** works by evaluating all valid moves and selecting the one that maximizes the player’s advantage. The `choose_greedy_move/2` predicate also generates a list of valid moves using the `valid_moves/2` predicate, then for each move, it calculates a value that represents the strategic advantage of making that move. This value is computed using the `evaluate_move/3` predicate, which simulates the move and evaluates the resulting game state with the `value/3` predicate. The `value/3` predicate computes a score based on **two factors**: the difference in the number of pieces between the two players and the difference in the total height of the stacks on the board. It calculates the value for each valid move, sorts these values, and selects the move with the highest value, ensuring the move with the greatest benefit based on the current game state is chosen.
 
-### References
+## References
 - [Official Rulebook](Anaash_rules.pdf): comprehensive details on game rules and strategies.
